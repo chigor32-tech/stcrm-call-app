@@ -15,49 +15,46 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Setup Android SDK
-      uses: android-actions/setup-android@v2
-
-    - name: Build APK with Gradle
+    - name: Compile App
       run: |
         mkdir -p app/src/main/java/ru/stcrm/callrouter app/src/main/res/layout
-        mv AndroidManifest.xml app/src/main/ || true
-        mv MainActivity.java app/src/main/java/ru/stcrm/callrouter/ || true
-        mv CallReceiver.java app/src/main/java/ru/stcrm/callrouter/ || true
         
+        [ -f AndroidManifest.xml ] && mv AndroidManifest.xml app/src/main/ || true
+        [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/ru/stcrm/callrouter/ || true
+        [ -f CallReceiver.java ] && mv CallReceiver.java app/src/main/java/ru/stcrm/callrouter/ || true
+
         echo '<?xml version="1.0" encoding="utf-8"?>
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:padding="24dp">
-            <EditText
-                android:id="@+id/editWebhookUrl"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:hint="Webhook URL" />
-            <Button
-                android:id="@+id/btnSave"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="Сохранить" />
+            android:layout_width="match_parent" android:layout_height="match_parent"
+            android:orientation="vertical" android:padding="24dp">
+            <EditText android:id="@+id/editWebhookUrl" android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Webhook URL"/>
+            <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Сохранить"/>
         </LinearLayout>' > app/src/main/res/layout/activity_main.xml
 
         echo 'include(":app")' > settings.gradle
-        echo 'buildscript { repositories { google(); mavenCentral() } dependencies { classpath "com.android.tools.build:gradle:7.4.2" } }' > build.gradle
-        echo 'apply plugin: "com.android.application"
+        echo 'rootProject.name = "StcrmRouter"' >> settings.gradle
+
+        echo 'plugins { id "com.android.application" version "7.4.2" apply false }' > build.gradle
+
+        echo 'plugins { id "com.android.application" }
         android {
             compileSdk 33
-            defaultConfig { applicationId "ru.stcrm.callrouter"; minSdk 21; targetSdk 33; versionCode 1; versionName "1.0" }
+            defaultConfig {
+                applicationId "ru.stcrm.callrouter"
+                minSdk 21
+                targetSdk 33
+                versionCode 1
+                versionName "1.0"
+            }
         }' > app/build.gradle
 
-        chmod +x ./gradlew || true
-        # Сборка через Gradle
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
+
         gradle wrapper
         ./gradlew assembleDebug
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: app-debug
+        name: stcrm-app-debug
         path: app/build/outputs/apk/debug/app-debug.apk
