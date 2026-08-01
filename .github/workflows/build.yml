@@ -7,10 +7,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Set up JDK 17
-      uses: actions/setup-java@v3
+      uses: actions/setup-java@v4
       with:
         distribution: 'temurin'
         java-version: '17'
@@ -31,8 +31,16 @@ jobs:
             <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Сохранить"/>
         </LinearLayout>' > app/src/main/res/layout/activity_main.xml
 
-        echo 'include(":app")' > settings.gradle
-        echo 'rootProject.name = "StcrmRouter"' >> settings.gradle
+        # Настройка репозиториев плагинов для Gradle
+        echo 'pluginManagement {
+            repositories {
+                google()
+                mavenCentral()
+                gradlePluginPortal()
+            }
+        }
+        include(":app")
+        rootProject.name = "StcrmRouter"' > settings.gradle
 
         echo 'plugins { id "com.android.application" version "7.4.2" apply false }' > build.gradle
 
