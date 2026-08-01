@@ -31,7 +31,6 @@ jobs:
             <Button android:id="@+id/btnSave" android:layout_width="match_parent" android:layout_height="wrap_content" android:text="Сохранить"/>
         </LinearLayout>' > app/src/main/res/layout/activity_main.xml
 
-        # Настройка репозиториев плагинов для Gradle
         echo 'pluginManagement {
             repositories {
                 google()
@@ -58,7 +57,8 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        gradle wrapper
+        # Генерируем правильную версию Gradle Wrapper (7.5), совместимую с Android плагином
+        gradle wrapper --gradle-version 7.5
         ./gradlew assembleDebug
 
     - name: Upload APK Artifact
