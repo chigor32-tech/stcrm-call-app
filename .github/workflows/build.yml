@@ -15,14 +15,16 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Create basic Gradle structure
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v2
+
+    - name: Build APK with Gradle
       run: |
         mkdir -p app/src/main/java/ru/stcrm/callrouter app/src/main/res/layout
-        mv AndroidManifest.xml app/src/main/
-        mv MainActivity.java app/src/main/java/ru/stcrm/callrouter/
-        mv CallReceiver.java app/src/main/java/ru/stcrm/callrouter/
+        mv AndroidManifest.xml app/src/main/ || true
+        mv MainActivity.java app/src/main/java/ru/stcrm/callrouter/ || true
+        mv CallReceiver.java app/src/main/java/ru/stcrm/callrouter/ || true
         
-        # Создаем минимальный layout для экрана настроек
         echo '<?xml version="1.0" encoding="utf-8"?>
         <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
             android:layout_width="match_parent"
@@ -41,11 +43,21 @@ jobs:
                 android:text="Сохранить" />
         </LinearLayout>' > app/src/main/res/layout/activity_main.xml
 
-        # Создаем gradle.build файлы для компиляции
         echo 'include(":app")' > settings.gradle
-        echo 'android { compileSdk 33; defaultConfig { applicationId "ru.stcrm.callrouter"; minSdk 21; targetSdk 33; versioncode 1; versionName "1.0"; } }' > app/build.gradle
+        echo 'buildscript { repositories { google(); mavenCentral() } dependencies { classpath "com.android.tools.build:gradle:7.4.2" } }' > build.gradle
+        echo 'apply plugin: "com.android.application"
+        android {
+            compileSdk 33
+            defaultConfig { applicationId "ru.stcrm.callrouter"; minSdk 21; targetSdk 33; versionCode 1; versionName "1.0" }
+        }' > app/build.gradle
 
-    - name: Build APK (Debug)
-      run: |
-        # Здесь GitHub соберет приложение в фоновом режиме
-        echo "Build completed simulation"
+        chmod +x ./gradlew || true
+        # Сборка через Gradle
+        gradle wrapper
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: app-debug
+        path: app/build/outputs/apk/debug/app-debug.apk
