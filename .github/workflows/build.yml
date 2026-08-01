@@ -17,7 +17,7 @@ jobs:
 
     - name: Compile App
       run: |
-        mkdir -p app/src/main/java/ru/stcrm/callrouter app/src/main/res/layout
+        mkdir -p app/src/main/java/ru/stcrm/callrouter app/src/main/res/layout gradle/wrapper
         
         [ -f AndroidManifest.xml ] && mv AndroidManifest.xml app/src/main/ || true
         [ -f MainActivity.java ] && mv MainActivity.java app/src/main/java/ru/stcrm/callrouter/ || true
@@ -57,9 +57,19 @@ jobs:
 
         echo "sdk.dir=$ANDROID_HOME" > local.properties
 
-        # Генерируем правильную версию Gradle Wrapper (7.5), совместимую с Android плагином
-        gradle wrapper --gradle-version 7.5
-        ./gradlew assembleDebug
+        # Создаем правильные свойства обертки Gradle 7.5 напрямую
+        echo "distributionBase=GRADLE_USER_HOME
+        distributionPath=wrapper/dists
+        distributionUrl=https\://services.gradle.org/distributions/gradle-7.5-bin.zip
+        zipStoreBase=GRADLE_USER_HOME
+        zipStorePath=wrapper/dists" > gradle/wrapper/gradle-wrapper.properties
+
+        # Скачиваем gradle-wrapper.jar и собираем проект
+        curl -s -o gradle/wrapper/gradle-wrapper.jar https://raw.githubusercontent.com/gradle/gradle/v7.5.0/subprojects/wrapper/src/main/resources/gradle-wrapper.jar
+        chmod +x ./gradlew || true
+
+        # Запуск сборки через локальную обертку Gradle 7.5
+        java -jar gradle/wrapper/gradle-wrapper.jar assembleDebug
 
     - name: Upload APK Artifact
       uses: actions/upload-artifact@v4
